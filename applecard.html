@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>心动之夜</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #2a0845 0%, #612c7a 50%, #1e0035 100%);
+            min-height: 100vh;
+            color: #e0baff;
+            overflow-x: hidden;
+        }
+        .page {
+            padding: 30px;
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            position: relative;
+        }
+        .hidden {
+            display: none !important;
+        }
+        h1, h2, h3 {
+            color: #f8daff;
+            text-shadow: 0 0 10px rgba(248, 200, 255, 0.4);
+            font-weight: 600;
+        }
+        p {
+            color: #d0a0ff;
+            font-size: 16px;
+        }
+
+        /* 输入框 */
+        .input-group input, .question-input {
+            width: 85%;
+            max-width: 400px;
+            padding: 14px;
+            background: rgba(100, 30, 150, 0.3);
+            border: 2px solid #9d4edd;
+            border-radius: 16px;
+            color: #f8eaff;
+            font-size: 18px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            outline: none;
+        }
+        .input-group input::placeholder, .question-input::placeholder {
+            color: #bfa0e0;
+        }
+        .input-group input:focus, .question-input:focus {
+            border-color: #e0aaff;
+            box-shadow: 0 0 20px rgba(224, 170, 255, 0.4);
+            background: rgba(120, 40, 170, 0.35);
+        }
+
+        .btn {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 14px 36px;
+            background: linear-gradient(45deg, #9d4edd, #c77dff);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            box-shadow: 0 5px 20px rgba(157, 78, 221, 0.4);
+        }
+        .btn:hover {
+            background: linear-gradient(45deg, #c77dff, #e0aaff);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(157, 78, 221, 0.6);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 倒计时 */
+        .countdown {
+            font-size: 80px;
+            font-weight: bold;
+            color: #e0aaff;
+            margin: 30px 0;
+            text-shadow: 0 0 15px rgba(224, 170, 255, 0.6);
+            animation: pulse 1s infinite alternate;
+        }
+        @keyframes pulse {
+            from { opacity: 0.8; transform: scale(1); }
+            to { opacity: 1; transform: scale(1.05); }
+        }
+
+        /* 测试题容器 */
+        .test-container {
+            width: 100%;
+            background: rgba(70, 20, 100, 0.3);
+            backdrop-filter: blur(12px);
+            border: 2px solid #9d4edd;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            max-width: 600px;
+        }
+        .question {
+            font-size: 22px;
+            margin-bottom: 25px;
+            color: #f8daff;
+            line-height: 1.5;
+        }
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin: 20px 0;
+        }
+        .option-btn {
+            padding: 16px;
+            background: rgba(100, 40, 140, 0.4);
+            border: 2px solid #9d4edd;
+            border-radius: 16px;
+            font-size: 16px;
+            color: #e0baff;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+        .option-btn:hover {
+            background: rgba(130, 60, 160, 0.5);
+            border-color: #c77dff;
+        }
+        .option-btn.selected {
+            background: linear-gradient(45deg, #9d4edd, #b37eee);
+            color: white;
+            border-color: #e0aaff;
+        }
+        .next-btn {
+            margin-top: 25px;
+        }
+        .finish-text {
+            margin-top: 25px;
+            color: #e0aaff;
+            font-size: 18px;
+            opacity: 0;
+            transition: opacity 0.8s;
+        }
+        .finish-text.show {
+            opacity: 1;
+        }
+
+        /* 进度条 */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(100, 40, 140, 0.5);
+            border-radius: 4px;
+            margin: 25px 0;
+            overflow: hidden;
+            border: 1px solid #9d4edd;
+        }
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #9d4edd, #c77dff);
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px rgba(199, 125, 255, 0.5);
+        }
+
+        /* 结果说明页样式 */
+        .result-explain {
+            background: rgba(70, 20, 100, 0.4);
+            backdrop-filter: blur(12px);
+            border: 2px solid #9d4edd;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            text-align: left;
+        }
+        .score-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #c77dff;
+            color: white;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .explain-title {
+            color: #f8daff;
+            font-size: 20px;
+            margin: 15px 0 10px;
+        }
+        .explain-text {
+            color: #d0a0ff;
+            line-height: 1.6;
+        }
+
+        /* 抽卡区域 */
+        .card-area {
+            margin-top: 30px;
+            width: 100%;
+            max-width: 600px;
+            background: rgba(70, 20, 100, 0.35);
+            backdrop-filter: blur(12px);
+            border: 2px solid #9d4edd;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            transition: all 0.5s ease;
+        }
+        .input-prompt {
+            font-size: 16px;
+            color: #d0a0ff;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        /* 词卡展示区 - 已移除旋转 */
+        .word-tags {
+            margin-top: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            min-height: 60px;
+        }
+        .word-tag {
+            padding: 14px 20px;
+            border-radius: 24px;
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+            background: #fff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease;
+            user-select: none;
+            white-space: nowrap;
+            animation: float-in 0.6s ease forwards;
+            transform-origin: center;
+        }
+        @keyframes float-in {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 页面1：输入名字 -->
+    <div id="page1" class="page">
+        <h1>✨ 开启心动之夜 ✨</h1>
+        <p>请用心呼唤梦角的名字</p>
+        <div class="input-group">
+            <input type="text" id="dreamCharacter" placeholder="" />
+        </div>
+        <button class="btn" id="btnStartCall">召唤梦角</button>
+    </div>
+
+    <!-- 页面2：倒计时 -->
+    <div id="page2" class="page hidden">
+        <h2>请继续用心呼唤: <span id="showDreamName"></span></h2>
+        <p>正在等待对方的回应...</p>
+        <div class="countdown" id="countdown">5</div>
+        <button class="btn" id="btnEnterTest" disabled>进入心动偏好测试</button>
+    </div>
+
+    <!-- 页面3：偏好测试 -->
+    <div id="testPage" class="page hidden">
+        <div class="test-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <h3 class="question" id="questionContent"></h3>
+            <div class="options-container" id="optionsContainer"></div>
+            <button class="btn next-btn hidden" id="nextQuestionBtn">下一题</button>
+            <p class="finish-text" id="finishTestText">心动频率已同步…即将生成专属回应</p>
+        </div>
+    </div>
+
+    <!-- 页面4：测试结果说明 -->
+    <div id="resultPage" class="page hidden">
+        <h2>心意传递完成！</h2>
+        <div class="result-explain">
+            <div class="score-badge" id="finalScoreDisplay"></div>
+            <p class="explain-text" id="interpretationText"></p>
+        </div>
+        <button class="btn" id="btnToCard">进入心动之夜❤️🍎</button>
+    </div>
+
+    <!-- 页面5：抽字卡 -->
+    <div id="page4" class="page hidden">
+        <p id="introText1">这是和 <span id="showDreamName2"></span> 共度的美妙心动夜晚，真挚的爱意在你们之间不断升温。</p>
+        <p id="introText2">不过，在你表达明确许可之前，他只会用深情的目光和甜蜜的话语诉说爱意。</p>
+
+        <div class="card-area">
+            <div class="input-prompt">如果想有进一步的亲密，请向对方说出你明确的请求或暧昧的暗示，他都会心领神会。</div>
+            <input type="text" class="question-input" id="questionInput" placeholder="例如:请抱我……" />
+            <button class="btn" id="btnDrawCard">他的回应</button>
+            <div class="word-tags" id="resultContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const state = {
+                dreamName: '',
+                totalScore: 0,
+                currentQuestion: 0,
+                selectedOption: null
+            };
+            let lastQuestion = '';
+
+            // DOM 元素
+            function getEl(id) { return document.getElementById(id); }
+            const page1 = getEl('page1');
+            const page2 = getEl('page2');
+            const testPage = getEl('testPage');
+            const resultPage = getEl('resultPage');
+            const page4 = getEl('page4');
+            const dreamCharacter = getEl('dreamCharacter');
+            const btnStartCall = getEl('btnStartCall');
+            const showDreamName = getEl('showDreamName');
+            const showDreamName2 = getEl('showDreamName2');
+            const countdownEl = getEl('countdown');
+            const btnEnterTest = getEl('btnEnterTest');
+            const questionContent = getEl('questionContent');
+            const optionsContainer = getEl('optionsContainer');
+            const nextQuestionBtn = getEl('nextQuestionBtn');
+            const finishTestText = getEl('finishTestText');
+            const progressFill = getEl('progressFill');
+            const finalScoreDisplay = getEl('finalScoreDisplay');
+            const interpretationText = getEl('interpretationText');
+            const btnToCard = getEl('btnToCard');
+            const questionInput = getEl('questionInput');
+            const btnDrawCard = getEl('btnDrawCard');
+            const resultContainer = getEl('resultContainer');
+            const introText1 = getEl('introText1');
+            const introText2 = getEl('introText2');
+
+            // ==================== 页面跳转 ====================
+            btnStartCall.addEventListener('click', function () {
+                const name = dreamCharacter.value?.trim();
+                if (!name) {
+                    alert('请输入梦角的名字哦～');
+                    return;
+                }
+                state.dreamName = name;
+                showDreamName.textContent = name;
+                showDreamName2.textContent = name;
+                page1.classList.add('hidden');
+                page2.classList.remove('hidden');
+                startCountdown();
+            });
+
+            function startCountdown() {
+                let count = 5;
+                const timer = setInterval(() => {
+                    countdownEl.textContent = count;
+                    count--;
+                    if (count < 0) {
+                        clearInterval(timer);
+                        btnEnterTest.disabled = false;
+                    }
+                }, 1000);
+            }
+
+            btnEnterTest.addEventListener('click', function () {
+                if (btnEnterTest.disabled) return;
+                page2.classList.add('hidden');
+                testPage.classList.remove('hidden');
+                loadQuestion();
+            });
+
+            // ==================== 测试题库 ====================
+            const testQuestions = [
+                {
+                    question: "你期待的今夜心动💗节奏是？",
+                    options: [
+                        { text: "缓慢升温，心意相通的情绪更重要", score: 1 },
+                        { text: "由你主导，此时此刻是你的主场", score: 3 },
+                        { text: "开放姿态，同意尝试更多有趣的方式", score: 5 },
+                        { text: "放弃反抗，任他完全掌控", score: 7 }
+                    ]
+                },
+                {
+                    question: "哪种表达爱的方式更打动你？",
+                    options: [
+                        { text: "爱要大声表白，行动力十足", score: 5 },
+                        { text: "总有温柔体贴的行动，处处让人安心", score: 1 },
+                        { text: "视你为女神，永远臣服于你的裙下", score: 3 },
+                        { text: "强烈占有欲，想掌控你的一切", score: 7 }
+                    ]
+                },
+                {
+                    question: "今晚你偏爱哪种前戏模式？",
+                    options: [
+                        { text: "多多前戏，享用他的温柔服务", score: 1 },
+                        { text: "你来主导，今天一切听你的", score: 3 },
+                        { text: "快乐探索，一起尝试新技术", score: 5 },
+                        { text: "无需前戏，目标明确直入主题", score: 7 }
+                    ]
+                },
+                {
+                    question: "你想听对方在心动💗时刻说什么？",
+                    options: [
+                        { text: "对你无限爱意倾诉", score: 3 },
+                        { text: "温柔周到的安抚", score: 1 },
+                        { text: "反复确认你的真心", score: 5 },
+                        { text: "简单粗暴，说到做到", score: 7 }
+                    ]
+                },
+                {
+                    question: "你今夜喜欢🍎🍎的亲密程度是？",
+                    options: [
+                        { text: "新手上路，纯爱贴贴就好", score: 1 },
+                        { text: "温柔体贴的全套流程", score: 3 },
+                        { text: "小做怡情，适当情趣更佳", score: 5 },
+                        { text: "放心把一切交给他", score: 7 }
+                    ]
+                }
+            ];
+
+            // ==================== 加载题目 ====================
+            function loadQuestion() {
+                if (state.currentQuestion >= testQuestions.length) return;
+                const q = testQuestions[state.currentQuestion];
+                questionContent.textContent = q.question;
+                optionsContainer.innerHTML = '';
+                state.selectedOption = null;
+
+                q.options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn';
+                    btn.textContent = opt.text;
+                    btn.dataset.score = opt.score;
+                    btn.addEventListener('click', function () {
+                        document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        state.selectedOption = parseInt(btn.dataset.score);
+                    });
+                    optionsContainer.appendChild(btn);
+                });
+
+                nextQuestionBtn.classList.remove('hidden');
+                finishTestText.classList.add('hidden');
+                const progress = ((state.currentQuestion + 1) / testQuestions.length) * 100;
+                progressFill.style.width = progress + '%';
+            }
+
+            nextQuestionBtn.addEventListener('click', function () {
+                if (state.selectedOption === null) {
+                    alert('请选择一个选项哦～');
+                    return;
+                }
+                state.totalScore += state.selectedOption;
+                state.currentQuestion++;
+                if (state.currentQuestion < testQuestions.length) {
+                    loadQuestion();
+                } else {
+                    nextQuestionBtn.classList.add('hidden');
+                    finishTestText.classList.remove('hidden');
+                    setTimeout(() => {
+                        testPage.classList.add('hidden');
+                        resultPage.classList.remove('hidden');
+                        showResultInterpretation();
+                    }, 800);
+                }
+            });
+
+            // ==================== 显示结果 ====================
+            function showResultInterpretation() {
+                finalScoreDisplay.textContent = `偏好已传达。`;
+                interpretationText.textContent = "你的心意已传递给对方，也许他会如你所愿，也许他有自己的想法……";
+            }
+
+            btnToCard.addEventListener('click', function () {
+                resultPage.classList.add('hidden');
+                page4.classList.remove('hidden');
+            });
+
+            // ==================== 马卡龙色系 ====================
+            const macaronColors = [
+                '#FFF5E6', '#FFE6E6', '#F0F7FF', '#E6FFFA', '#F9F4FF',
+                '#FFF9E6', '#E6FFED', '#FFEDED', '#F2F9F2', '#FDF5FF'
+            ];
+
+            // ==================== 词库 ====================
+             const wordLibrary = {
+                introverted: {
+                    emotion: [  '温柔', '温柔', '温柔', '凝望', '安慰', '试探', '微笑',  '否定', '疑问', '心动', '眷恋', '凝望', '安慰', '忍耐',  '满意', '克制', '强势', '不要',  '心动',  '喘息', '迷醉', '餍足', '不满','用力', '意乱神迷', '拥抱温存', '亲亲', '不要拒绝', '满足',  '想要',  '迷恋', '贴近','给我'],
+                    response: [ '好孩子', '你真棒', '别怕', '别哭，我在', '我懂','别紧张', '好湿', '真可爱', '没事的','相信我', '没关系的', '我一直都在',  '别逃，近一些', '抱我', '说你爱我', '看着我', '再近一点', '别停下', '求你', '好软', '说你要我', '吻我', '可以吻这里吗', '再放松些','张开嘴巴含住', '嘘', '你是我的', '不准逃开我','不舒服吗', '再深一点', '叫我的名字', '让我看看好吗', '是这里吗','很紧','好美','抱紧我我才能更深','真是好孩子','怎么湿成这样','是甜的呢','想要吗？','现在可以进去吗？'],
+                    action: ['抚摸脸庞', '亲吻嘴唇', '轻咬嘴唇', '含住柔软', '深情亲吻','背后拥抱','抚摸脸颊', '含住舌头', '亲吻耳尖', '亲吻额头','十指相扣','抚摸大腿','搂住腰部','高抬起脚踝','抚摸腿间软肉','手指慢慢打转','俯下身子亲吻','观察你的表情','舔弄柔软','手指深入','手指拨弄揉按','上下摩挲','额头相抵','轻轻摩挲','亲吻你的掌心','亲吻你的脚踝','温柔搂进怀中','融为一体','偷吻','感受你的柔软','吮吸甜蜜','湿漉漉的手指','揉按加速','温柔按摩','抱进怀里安抚','轻轻揉按','上下摩挲'],
+                    intention: ['说你只爱我', '无法放开你', '我一直都在', '想沉溺于你', '你真的很美', '想和你融为一体', '遇见你是我最大的幸运','我爱你']
+                },
+                gentle: {
+                    emotion: [  '微笑', '凝望', '安慰', '试探','依恋',  '心动', '主人', '凝望', '关心', '主人', '忍耐','默许',  '满意', '拒绝', '喘息', '迷醉', '喘息', '臣服', '心痒', '哀求', '哀求','沉溺',  '满足',  '想要',  '迷恋', '给我'],
+                    response: [ '亲亲', '一切听你的', '我懂','我可以', '竭力忍耐', '真可爱', '没事的','相信你', '没关系的', '很好',  '我爱你', '抱我', '说你爱我', '看着我', '说你想要我', '别停下', '求你', '好软', '我想要你', '吻我', '可以吻这里吗', '再放松些','忍不了了', '好舒服，继续', '你是我的', '不准逃开我','好舒服', '再深一点', '叫我的名字', '摸摸看', '就是这里','很紧','好美','唔，好深','真是好孩子','反对','看着我','现在就想要','现在可以进去吗？'],
+                    action: ['抚摸脸庞', '亲吻嘴唇', '轻咬嘴唇', '含住柔软', '深情亲吻','背后拥抱','抚摸脸颊', '含住舌头', '亲吻耳尖', '亲吻额头','十指相扣','抚摸大腿','搂住腰部','高抬起脚踝','抚摸腿间软肉','手指慢慢打转','俯下身子亲吻','观察你的表情','舔弄柔软','手指深入','抚摸脸庞', '亲吻嘴唇', '索取亲吻', '含住柔软', '抓住双手', '含住舌头', '亲吻耳尖', '亲吻额头','十指相扣','抚摸大腿','搂住腰部','躺在你身下','抚摸腿间软肉','为你服务','按摩你的腰部','轻轻探入食指','舔弄小豆豆','手指深入','手指拨弄揉压','手指速度加快','增加手指','蹭你的脖颈','插入更深','讨好地亲吻','亲吻你的脚踝','挺身插入','感受你的湿热','大力撞击','反客为主','抱你在怀中','吮吸甜蜜','举起湿漉漉的手指','忍不住释放'],
+                    intention: ['可不可以只爱我', '你是我的一切', '你有没有好好爱我', '我一直都在', '我愿臣服于你', '你真的很美', '想和你融为一体', '你是我的全部','我爱你']
+                },
+                joyful: {
+                    emotion: [  '温柔', '微笑', '微笑', '凝望', '安慰', '凝望', '忍耐',  '满意',  '强势', '压制',  '喘息', '迷醉', '餍足', '耐心哄',  '缠绵','用力','满足',  '故意询问',  '迷恋', '贴近','听话','安慰','满意','耐心哄'],
+                    response: [ '吃得好深', '别怕，交给我', '安全词是:我爱你', '我懂','别紧张', '好湿', '真可爱', '再夹紧些','相信我', '再来一次也可以吧', '我一直都在',  '挺高一点', '看看镜子里的你有多美', '说你爱我', '睁开眼睛看着我', '怎么湿成这样', '再张开些', '求我', '好软好香', '说你要我，大声一点', '吻我', '舌头伸出来', '再放松些','张开嘴巴含住', '嘘', '你是我的', '不准逃开我','舒服吗', '再深一点', '叫我的名字', '在害羞吗', '是这里吗','很紧','好美','想要什么','真是好孩子','怎么湿成这样','是甜的呢','看着我','大声一点'],
+                    action: ['抚摸脸庞', '亲吻嘴唇', '轻咬嘴唇', '含住柔软', '深情亲吻','背后拥抱','抚摸脸颊', '含住舌头', '亲吻耳尖', '亲吻额头','十指相扣','抚摸大腿','搂住腰部','高抬起脚踝','抚摸腿间软肉','手指慢慢打转','俯下身子亲吻','观察你的表情','舔弄柔软','手指深入','打开跳蛋', '亲吻嘴唇', '慢慢塞入跳蛋', '含住乳头', '调高震动档次', '含住你的舌头', '亲吻耳尖', '拿出乳夹','收紧绳结','抚摸大腿','翻转你的身体','抬高小腿压在胸前','抚摸腿间软肉','手指在穴口打转','蒙住你的眼睛','探入食指','舔弄小豆豆','手指深入拨弄','手指拨弄揉压','手指速度加快','增加手指','慢慢塞入珍珠','更深','温柔亲吻','戴上手铐','挺身插入','用力耸动腰身','大力撞击','解开扣子','绑住手腕','吮吸甜蜜','举起湿漉漉的手指','揉按挑弄','放置凝视','抱你去浴室','落地窗边','温柔亲吻'],
+                    intention: ['说你只爱我', '你是我的一切', '疯狂迷恋你', '我一直都在', '永远不会放手', '为了你的快乐我愿付出一切', '想和你融为一体', '想到达你的最深处','我爱你']
+                },
+                passionate: {
+                    emotion: [  '意外温柔',  '凝望', '撩拨', '试探','嫉妒', '不耐',  '强势', '拒绝', '心动', '急切', '紧绷', '关心', '癫狂', '忍耐',  '满意', '克制', '强势', '不要',  '心动', '贪恋', '喘息', '迷醉', '餍足', '不满', '窒息深吻', '哄骗', '依偎', '哀求', '缠绵','用力', '沉溺', '想刻下印记', '解开扣子', '急切抚摸', '不满足',  '想要',  '沉默', '反问','给我'],
+                    response: [ '好孩子', '你真棒', '别怕', '哭了？', '为我张开','想逃？', '好湿', '真可爱', '痛会让你记住我','相信我', '吃下我的全部', '我一直都在',  '你不可能逃掉', '听话，抱紧我', '快说你爱我', '看着我', '过来', '别停下', '求我', '好软', '说你要我', '吻我', '敏感点是这里', '再放松些','张开嘴巴含住', '嘘', '你是我的', '不准逃开我','想让我求你？', '再深一点', '叫我的名字', '张大些，让我看看', '是这里吗','嗯，很紧','好美','抱紧我我才能更深','真是好孩子','怎么湿成这样','是甜的呢','想要吗？','现在要进去了'],
+                    action: ['抚摸脸庞', '亲吻嘴唇', '轻咬嘴唇', '含住柔软', '深情亲吻','背后拥抱','抚摸脸颊', '含住舌头', '亲吻耳尖', '亲吻额头','十指相扣','抚摸大腿','搂住腰部','高抬起脚踝','抚摸腿间软肉','手指慢慢打转','俯下身子亲吻','观察你的表情','舔弄柔软','手指深入','抚摸脸庞', '亲吻嘴唇', '轻咬嘴唇', '含住乳头', '抚摸胸部', '含住你的舌头', '咬住耳垂', '拽进怀里','攥紧你的手腕','抚摸大腿','用力搂住腰部','高抬起脚踝','抚摸腿间软肉','手指在穴口打转','鼻尖顶住小豆','轻轻探入食指','舔弄小豆豆','温柔亲吻','痴迷亲吻','手指深入','翻身压上','手指拨弄揉压','手指速度加快','增加手指','扩张穴口','插入更深','插入得更深','亲吻你的脚踝','挺身插入','用力耸动腰身','大力撞击','剧烈撞击','背后拥紧','吮吸甜蜜汁水','举起湿漉漉的手指','揉按摩挲','抱进怀中安慰','拭去泪水','亲吻泪水'],
+                    intention: ['说你只爱我', '你是我的一切', '无法放开你', '我一直都在', '想沉溺于你', '不会让你逃离我', '想要你彻底属于我', '想到达你的最深处','我爱你']
+                 }
+            };
+            function getWordGroup(score) {
+                if (score <= 20) return wordLibrary.introverted;
+                if (score <= 25) return wordLibrary.gentle;
+                if (score <= 30) return wordLibrary.joyful;
+                return wordLibrary.passionate;
+            }
+
+            function pickWord(arr) {
+                return arr[Math.floor(Math.random() * arr.length)];
+            }
+
+            function shuffleArray(array) {
+                const arr = [...array];
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
+                return arr;
+            }
+
+            // ==================== 抽卡逻辑 ====================
+            btnDrawCard.addEventListener('click', function () {
+                const input = questionInput?.value?.trim();
+                if (input) lastQuestion = input;
+                if (!lastQuestion) {
+                    alert('请先说些什么吧～');
+                    return;
+                }
+
+                // 隐藏介绍文字
+                introText1.style.display = 'none';
+                introText2.style.display = 'none';
+                document.querySelector('.input-prompt').style.display = 'none';
+
+                const group = getWordGroup(state.totalScore);
+                let words = [
+                    pickWord(group.emotion),
+                    pickWord(group.response),
+                    pickWord(group.action)
+                ];
+
+                if (Math.random() < 0.2) {
+                    words.push(pickWord(group.intention));
+                }
+
+                words = shuffleArray(words);
+                resultContainer.innerHTML = '';
+
+                words.forEach((word, index) => {
+                    const tag = document.createElement('div');
+                    tag.className = 'word-tag';
+                    tag.textContent = word;
+
+                    // 随机背景色
+                    const bgColor = macaronColors[Math.floor(Math.random() * macaronColors.length)];
+                    tag.style.backgroundColor = bgColor;
+                    tag.style.boxShadow = `0 4px 12px rgba(0,0,0,0.1)`;
+                    tag.style.border = '1px solid rgba(255,255,255,0.5)';
+
+                    // 动画延迟
+                    tag.style.animationDelay = `${index * 0.1}s`;
+
+                    // 点击反馈
+                    tag.addEventListener('click', () => {
+                        tag.style.transform = 'scale(0.95)';
+                        setTimeout(() => tag.style.transform = 'scale(1)', 150);
+                    });
+
+                    resultContainer.appendChild(tag);
+                });
+
+                // 按钮文字切换
+                btnDrawCard.textContent = '他的回应';
+                setTimeout(() => {
+                    btnDrawCard.textContent = '点击继续心动💗';
+                }, 3000);
+            });
+        });
+    </script>
+</body>
+</html>
